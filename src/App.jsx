@@ -31,45 +31,40 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ===================== 색상 팔레트 생성 (중간톤 비중 ↑, 녹색 비중 ↓) =====================
+// ===================== 팔레트 생성 (톤온톤/톤인톤 실습 최적화) =====================
 function generateColorsRainbow() {
-  // Hue: 12등분 (0,30,...330)
-  const hues = Array.from({ length: 12 }, (_, i) => i * 30);
+  // Hue: 15° 간격 → 24색 (0~345)
+  const hues = Array.from({ length: 24 }, (_, i) => i * 15);
 
-  // 채도: 중간 범위 위주 (형광/탁함 회피)
-  const sats = [50, 55, 60, 65, 70]; // 적절한 범위만
+  // 채도: 중간~높음
+  const sats = [55, 65, 75];
 
-  // 명도: 극단은 드문드문, 중간톤 밀도 ↑
-  const lows    = [15, 25, 35, 42];            // 어두운 쪽 (희소)
-  const mids    = [48, 52, 56, 60, 64];        // ✅ 중간톤 (밀도 높임)
-  const highs   = [70, 78, 88, 95];            // 밝은 쪽 (희소)
+  // 명도: 40~85% (너무 어둡거나 너무 밝은 건 제외)
+  // 중간톤(50~70%)을 2배로 넣어서 비중 ↑
+  const lows  = [40, 45];
+  const mids  = [50, 55, 60, 65, 70, 70, 60, 55]; // ✅ 중복 포함 → 중간톤 비중 높임
+  const highs = [75, 80, 85];
+  const ligs = [...lows, ...mids, ...highs];
 
-  // 중간톤을 '가중치 2배'로 반영하기 위해 배열을 중복 구성
-  const ligsWeighted = [...lows, ...mids, ...mids, ...highs];
-
-  const isGreenish = (h) => h >= 100 && h <= 140; // 녹색 구간
+  const isGreenish = (h) => h >= 100 && h <= 140; // 녹색 구간 체크
 
   const colors = [];
   for (const h of hues) {
-    for (let si = 0; si < sats.length; si++) {
-      const s = sats[si];
-      for (let li = 0; li < ligsWeighted.length; li++) {
-        const l = ligsWeighted[li];
-
-        // 녹색 계열은 절반만 포함해서 비중 ↓
-        if (isGreenish(h) && ((si + li) % 2 === 1)) continue;
-
+    for (const s of sats) {
+      for (const l of ligs) {
+        // 녹색 계열은 절반만 샘플링 → 시각적 편중 완화
+        if (isGreenish(h) && (l % 2 === 0)) continue;
         colors.push({ h, s, l, css: `hsl(${h} ${s}% ${l}%)` });
       }
     }
   }
 
-  // 무작위 섞기 (Fisher–Yates)
+  // 무작위 섞기
   for (let i = colors.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [colors[i], colors[j]] = [colors[j], colors[i]];
   }
-  return colors; // ≈ 300개, 중간톤 비율이 눈에 띄게 증가
+  return colors; // 약 300개
 }
 
 
