@@ -31,17 +31,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ===================== 팔레트 생성 (녹색 ↓, earth tone ↑) =====================
 function generateColorsRainbow() {
-  // Hue: 30° 간격 (0~330, 12색)
+  // Hue: 30° 간격 12색
   const hues = Array.from({ length: 12 }, (_, i) => i * 30);
-
-  // 채도: 중간 범위 (형광 방지)
   const sats = [50, 60, 70];
 
-  // 명도: 저~고 전반, 중간톤 비중 ↑
-  const lows  = [25, 35];
-  const mids  = [50, 55, 60, 65, 60, 55]; // 중복 → 비중 ↑
+  // 명도: 저명도 확장, 중간톤 밀도 ↑
+  const lows  = [15, 20, 25, 30, 35];
+  const mids  = [50, 55, 60, 65, 60];
   const highs = [75, 85];
   const ligs = [...lows, ...mids, ...highs];
 
@@ -51,15 +48,19 @@ function generateColorsRainbow() {
   for (const h of hues) {
     for (const s of sats) {
       for (const l of ligs) {
-        // ✅ 녹색 계열은 3분의 1만 유지
-        if (isGreenish(h) && ((s + l) % 3 !== 0)) continue;
-        colors.push({ h, s, l, css: `hsl(${h} ${s}% ${l}%)` });
+        // ✅ 녹색 계열은 4분의 1만 유지
+        if (isGreenish(h) && ((s + l) % 4 !== 0)) continue;
+
+        // ✅ 저명도일 때 채도 조금 올려서 구분 잘 되게
+        const satAdj = l < 40 ? Math.min(s + 10, 80) : s;
+
+        colors.push({ h, s: satAdj, l, css: `hsl(${h} ${satAdj}% ${l}%)` });
       }
     }
   }
 
-  // ✅ Earth tone 추가
-  const earthHues = [20, 30, 40, 90, 100]; // 브라운, 주황, 올리브
+  // ✅ Earth tone 추가 (브라운, 주황, 올리브)
+  const earthHues = [20, 30, 40, 90, 100]; // 브라운/주황/올리브
   const earthSats = [25, 30, 35, 40];      // 저채도
   const earthLigs = [35, 45, 55, 65];      // 중저명도
   for (const h of earthHues) {
@@ -76,7 +77,7 @@ function generateColorsRainbow() {
     [colors[i], colors[j]] = [colors[j], colors[i]];
   }
 
-  return colors; // ~300개, 녹색 ↓, earth tone ↑
+  return colors;
 }
 
 
