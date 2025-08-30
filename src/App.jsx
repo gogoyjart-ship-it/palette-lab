@@ -31,29 +31,40 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ===================== 팔레트 생성 (톤온톤/톤인톤 실습 최적화) =====================
+// ===================== 팔레트 생성 (녹색 ↓, earth tone ↑) =====================
 function generateColorsRainbow() {
-  // Hue: 15° 간격 → 24색 (0~345)
-  const hues = Array.from({ length: 24 }, (_, i) => i * 15);
+  // Hue: 30° 간격 (0~330, 12색)
+  const hues = Array.from({ length: 12 }, (_, i) => i * 30);
 
-  // 채도: 중간~높음
-  const sats = [55, 65, 75];
+  // 채도: 중간 범위 (형광 방지)
+  const sats = [50, 60, 70];
 
-  // 명도: 40~85% (너무 어둡거나 너무 밝은 건 제외)
-  // 중간톤(50~70%)을 2배로 넣어서 비중 ↑
-  const lows  = [40, 45];
-  const mids  = [50, 55, 60, 65, 70, 70, 60, 55]; // ✅ 중복 포함 → 중간톤 비중 높임
-  const highs = [75, 80, 85];
+  // 명도: 저~고 전반, 중간톤 비중 ↑
+  const lows  = [25, 35];
+  const mids  = [50, 55, 60, 65, 60, 55]; // 중복 → 비중 ↑
+  const highs = [75, 85];
   const ligs = [...lows, ...mids, ...highs];
 
-  const isGreenish = (h) => h >= 100 && h <= 140; // 녹색 구간 체크
+  const isGreenish = (h) => h >= 100 && h <= 140;
 
   const colors = [];
   for (const h of hues) {
     for (const s of sats) {
       for (const l of ligs) {
-        // 녹색 계열은 절반만 샘플링 → 시각적 편중 완화
-        if (isGreenish(h) && (l % 2 === 0)) continue;
+        // ✅ 녹색 계열은 3분의 1만 유지
+        if (isGreenish(h) && ((s + l) % 3 !== 0)) continue;
+        colors.push({ h, s, l, css: `hsl(${h} ${s}% ${l}%)` });
+      }
+    }
+  }
+
+  // ✅ Earth tone 추가
+  const earthHues = [20, 30, 40, 90, 100]; // 브라운, 주황, 올리브
+  const earthSats = [25, 30, 35, 40];      // 저채도
+  const earthLigs = [35, 45, 55, 65];      // 중저명도
+  for (const h of earthHues) {
+    for (const s of earthSats) {
+      for (const l of earthLigs) {
         colors.push({ h, s, l, css: `hsl(${h} ${s}% ${l}%)` });
       }
     }
@@ -64,76 +75,10 @@ function generateColorsRainbow() {
     const j = Math.floor(Math.random() * (i + 1));
     [colors[i], colors[j]] = [colors[j], colors[i]];
   }
-  return colors; // 약 300개
+
+  return colors; // ~300개, 녹색 ↓, earth tone ↑
 }
 
-
-const SCHEMES = [
-  { key: "tone_on_tone", label: "톤온톤" },
-  { key: "tone_in_tone", label: "톤인톤" },
-  { key: "separation", label: "세퍼레이션" },
-  { key: "accent", label: "엑센트" },
-  { key: "emotional", label: "감성배색" },
-];
-
-function Swatch({ color, onPick, size = 28 }) {
-  return (
-    <button
-      onClick={() => onPick?.(color)}
-      className="rounded-md border border-black/5 focus:outline-none focus:ring-2 focus:ring-black/20"
-      style={{ background: color.css, width: size, height: size }}
-      title={color.css}
-    />
-  );
-}
-
-function Slot({ value, active, onClick, onClear }) {
-  return (
-    <div className="flex items-center gap-2">
-      <button
-        onClick={onClick}
-        className={`w-12 h-12 rounded-xl border border-black/10 shadow-sm focus:outline-none ${
-          active ? "ring-4 ring-black/40" : "focus:ring-2 focus:ring-black/20"
-        }`}
-        style={{ background: value?.css || "#fff" }}
-        title={value?.css || "빈 칸"}
-      />
-      {value && (
-        <button
-          className="text-xs px-2 py-1 rounded-md border border-black/10 hover:bg-black/5"
-          onClick={onClear}
-        >
-          지우기
-        </button>
-      )}
-    </div>
-  );
-}
-
-function SchemeBoard({ title, schemeKey, value, selected, onSelect, onChange }) {
-  const setSlot = (idx, color) => {
-    const next = [...value];
-    next[idx] = color;
-    onChange(next);
-  };
-  return (
-    <div className="p-4 rounded-2xl border border-black/10 shadow-sm bg-white">
-      <h3 className="text-lg font-semibold mb-3">{title}</h3>
-      {/* 가로(1×5) 고정 */}
-      <div className="grid grid-cols-5 gap-3">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Slot
-            key={i}
-            value={value[i]}
-            active={selected?.schemeKey === schemeKey && selected?.index === i}
-            onClick={() => onSelect({ schemeKey, index: i })}
-            onClear={() => setSlot(i, undefined)}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function Palette({ colors, fixedOnTablet, onPick }) {
   return (
