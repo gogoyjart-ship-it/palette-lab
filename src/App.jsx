@@ -80,6 +80,7 @@ function generateColorsRainbow() {
   return colors;
 }
 
+
 const SCHEMES = [
   { key: "tone_on_tone", label: "톤온톤" },
   { key: "tone_in_tone", label: "톤인톤" },
@@ -87,6 +88,65 @@ const SCHEMES = [
   { key: "accent", label: "엑센트" },
   { key: "emotional", label: "감성배색" },
 ];
+
+function Swatch({ color, onPick, size = 28 }) {
+  return (
+    <button
+      onClick={() => onPick?.(color)}
+      className="rounded-md border border-black/5 focus:outline-none focus:ring-2 focus:ring-black/20"
+      style={{ background: color.css, width: size, height: size }}
+      title={color.css}
+    />
+  );
+}
+
+function Slot({ value, active, onClick, onClear }) {
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={onClick}
+        className={`w-12 h-12 rounded-xl border border-black/10 shadow-sm focus:outline-none ${
+          active ? "ring-4 ring-black/40" : "focus:ring-2 focus:ring-black/20"
+        }`}
+        style={{ background: value?.css || "#fff" }}
+        title={value?.css || "빈 칸"}
+      />
+      {value && (
+        <button
+          className="text-xs px-2 py-1 rounded-md border border-black/10 hover:bg-black/5"
+          onClick={onClear}
+        >
+          지우기
+        </button>
+      )}
+    </div>
+  );
+}
+
+function SchemeBoard({ title, schemeKey, value, selected, onSelect, onChange }) {
+  const setSlot = (idx, color) => {
+    const next = [...value];
+    next[idx] = color;
+    onChange(next);
+  };
+  return (
+    <div className="p-4 rounded-2xl border border-black/10 shadow-sm bg-white">
+      <h3 className="text-lg font-semibold mb-3">{title}</h3>
+      {/* 가로(1×5) 고정 */}
+      <div className="grid grid-cols-5 gap-3">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Slot
+            key={i}
+            value={value[i]}
+            active={selected?.schemeKey === schemeKey && selected?.index === i}
+            onClick={() => onSelect({ schemeKey, index: i })}
+            onClear={() => setSlot(i, undefined)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function Palette({ colors, fixedOnTablet, onPick }) {
   return (
