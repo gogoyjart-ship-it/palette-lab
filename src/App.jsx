@@ -80,6 +80,13 @@ function generateColorsRainbow() {
   return colors;
 }
 
+const SCHEMES = [
+  { key: "tone_on_tone", label: "톤온톤" },
+  { key: "tone_in_tone", label: "톤인톤" },
+  { key: "separation", label: "세퍼레이션" },
+  { key: "accent", label: "엑센트" },
+  { key: "emotional", label: "감성배색" },
+];
 
 function Palette({ colors, fixedOnTablet, onPick }) {
   return (
