@@ -20,7 +20,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 /* ===================== 앱 타이틀/스킴 ===================== */
-const APP_TITLE = "(디자인)배색 실습 - 저동중학교 학부모 공개 수업";
+const APP_TITLE = "(디자인)색채학 배색 실습 - 저동중학교 1학년 동료 장학";
 
 const SCHEMES = [
   { key: "tone_on_tone", label: "톤온톤" },
